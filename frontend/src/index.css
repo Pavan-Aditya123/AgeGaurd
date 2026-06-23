@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: #0A0A0F;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0A0A0F;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #2A2A35;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #E50914;
+  }
+}
+
+@layer components {
+  .badge-U {
+    @apply bg-green-600 text-white text-xs font-semibold px-2 py-0.5 rounded;
+  }
+
+  .badge-UA {
+    @apply bg-yellow-500 text-black text-xs font-semibold px-2 py-0.5 rounded;
+  }
+
+  .badge-A {
+    @apply bg-red-600 text-white text-xs font-semibold px-2 py-0.5 rounded;
+  }
+
+  .movie-card {
+    @apply relative bg-[#141418] rounded-xl overflow-hidden cursor-pointer
+           transition-all duration-300 border border-transparent
+           hover:border-[#E50914] hover:scale-105 hover:shadow-2xl hover:shadow-red-900/30;
+  }
+
+  .btn-primary {
+    @apply bg-[#E50914] hover:bg-red-700 text-white font-semibold px-6 py-3
+           rounded-lg transition-all duration-200 flex items-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3
+           rounded-lg transition-all duration-200 flex items-center gap-2 border border-white/20;
+  }
+}
+
+/* Hero gradient overlay */
+.hero-gradient {
+  background: linear-gradient(
+    to bottom,
+    rgba(10, 10, 15, 0) 0%,
+    rgba(10, 10, 15, 0.4) 40%,
+    rgba(10, 10, 15, 0.85) 75%,
+    rgba(10, 10, 15, 1) 100%
+  );
+}
+
+/* Animated lock icon pulse */
+@keyframes lock-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(229, 9, 20, 0); }
+}
+
+.lock-pulse {
+  animation: lock-pulse 2s infinite;
+}
+
+/* Video player fade-in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
