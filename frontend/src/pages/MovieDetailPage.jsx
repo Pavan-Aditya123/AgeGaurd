@@ -3,7 +3,7 @@
  *
  * Full detail view for a single movie.
  * Data fetched via useMovie(id) hook.
- * Phase 2 will replace handlePlay() with QR generation logic.
+ * Restricted movies route to QR verification; others go to the player.
  */
 
 import React, { useState } from "react";
@@ -22,11 +22,15 @@ export default function MovieDetailPage() {
 
   /**
    * handlePlay()
-   * Phase 1: Navigate directly to player.
-   * Phase 2: Will trigger QR code generation for restricted movies.
+   * Restricted movies → QR verification page.
+   * Unrestricted movies → video player.
    */
   const handlePlay = () => {
-    navigate(`/watch/${id}`);
+    if (movie.restricted) {
+      navigate(`/verify/${id}`);
+    } else {
+      navigate(`/watch/${id}`);
+    }
   };
 
   if (loading) {

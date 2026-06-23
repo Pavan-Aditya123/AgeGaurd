@@ -12,6 +12,7 @@ Blueprint registration pattern makes it easy to add Phase 2+ routes:
 from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from routes.movie_routes import movie_bp
+from routes.verification_routes import verification_bp
 import os
 
 app = Flask(__name__, static_folder='static')
@@ -21,10 +22,7 @@ CORS(app)
 # Register blueprints
 # ---------------------------------------------------------------------------
 app.register_blueprint(movie_bp, url_prefix="/movies")
-
-# Phase 2+: register additional blueprints here
-# from routes.verification_routes import verification_bp
-# app.register_blueprint(verification_bp, url_prefix="/verify")
+app.register_blueprint(verification_bp, url_prefix="/api")
 
 
 # ---------------------------------------------------------------------------
