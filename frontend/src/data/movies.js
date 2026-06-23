@@ -18,7 +18,7 @@ const MOVIES = [
     category: "Drama / Comedy",
     poster:
       "https://cdn.cinematerial.com/p/297x/pzp2uua4/chhichhore-indian-movie-poster-md.jpg?v=1568837614",
-    video: "/videos/sample.mp4",
+    video: "/Videos/Kung Fu Panda_Trailer.mp4",
     year: 2019,
     duration: "2h 21m",
   },
@@ -33,7 +33,7 @@ const MOVIES = [
     category: "Sci-Fi / Adventure",
     poster:
       "https://upload.wikimedia.org/wikipedia/en/b/bc/Interstellar_film_poster.jpg",
-    video: "/videos/sample.mp4",
+    video: "/Videos/Kung Fu Panda_Trailer.mp4",
     year: 2014,
     duration: "2h 49m",
   },
@@ -48,7 +48,7 @@ const MOVIES = [
     category: "Crime / Thriller",
     poster:
       "https://image.tmdb.org/t/p/w500/snBOuXDdhmTvlzMUvP9Em3Pp1u1.jpg",
-    video: "/videos/sample.mp4",
+    video: "/Videos/Kung Fu Panda_Trailer.mp4",
     year: 2024,
     duration: "2h 15m",
   },
@@ -63,7 +63,7 @@ const MOVIES = [
     category: "Action / Drama",
     poster:
       "https://upload.wikimedia.org/wikipedia/en/9/90/Animal_%282023_film%29_poster.jpg",
-    video: "/videos/sample.mp4",
+    video: "/Videos/Kung Fu Panda_Trailer.mp4",
     year: 2023,
     duration: "3h 21m",
   },
@@ -78,7 +78,7 @@ const MOVIES = [
     category: "Action / Thriller",
     poster:
       "https://upload.wikimedia.org/wikipedia/en/6/6e/John_Wick_Chapter_4_poster.jpg",
-    video: "/videos/sample.mp4",
+    video: "/Videos/Kung Fu Panda_Trailer.mp4",
     year: 2023,
     duration: "2h 49m",
   },
@@ -93,7 +93,7 @@ const MOVIES = [
     category: "Animation / Comedy",
     poster:
       "/Posters/kung-fu-panda.webp",
-    video: "/videos/sample.mp4",
+    video: "/Videos/Kung Fu Panda_Trailer.mp4",
     year: 2008,
     duration: "1h 32m",
   },

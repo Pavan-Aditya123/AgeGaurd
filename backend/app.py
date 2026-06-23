@@ -41,6 +41,13 @@ def serve_poster(filename):
     return send_from_directory(os.path.join(app.static_folder, 'Posters'), filename)
 
 
+@app.route("/Videos/<path:filename>")
+def serve_video(filename):
+    """Serve trailer videos from frontend/public/Videos (CRA dev proxy fallback)."""
+    videos_dir = os.path.join(os.path.dirname(__file__), "..", "frontend", "public", "Videos")
+    return send_from_directory(videos_dir, filename)
+
+
 # ---------------------------------------------------------------------------
 # Run
 # ---------------------------------------------------------------------------
