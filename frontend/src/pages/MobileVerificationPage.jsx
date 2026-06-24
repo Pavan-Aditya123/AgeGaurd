@@ -20,15 +20,18 @@ export default function MobileVerificationPage() {
   const [error, setError] = useState(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [result, setResult] = useState(null);
 
-  // Validate session
   useEffect(() => {
     getVerificationSession(sessionId)
       .then((data) => {
         setSessionInfo(data);
-        if (data.uploadStatus === "uploaded") {
-          setSubmitted(true);
+        if (data.verificationStatus === "verified" || data.verificationStatus === "denied") {
+          setResult({
+            verified: data.verified,
+            predictedAge: data.predictedAge,
+            requiredAge: data.requiredAge,
+          });
         }
         setLoading(false);
       })
@@ -38,9 +41,8 @@ export default function MobileVerificationPage() {
       });
   }, [sessionId]);
 
-  // Open front camera
   useEffect(() => {
-    if (loading || error || submitted) return;
+    if (loading || error || result) return;
 
     let cancelled = false;
 
@@ -63,7 +65,19 @@ export default function MobileVerificationPage() {
           setCameraReady(true);
         }
       } catch (err) {
-        setError("Camera access denied. Please allow camera permission and reload.");
+        const isInsecure =
+          window.location.protocol === "http:" &&
+          !["localhost", "127.0.0.1"].includes(window.location.hostname);
+
+        if (isInsecure) {
+          setError(
+            "Camera blocked: mobile browsers require HTTPS. Run npm run update-network, then npm run start:https, open the HTTPS URL on your phone, accept the security warning once, then scan the QR again."
+          );
+        } else if (err.name === "NotAllowedError") {
+          setError("Camera permission denied. Allow camera access in your browser settings and tap Retry.");
+        } else {
+          setError("Could not open camera. Allow camera permission and tap Retry.");
+        }
       }
     }
 
@@ -73,7 +87,7 @@ export default function MobileVerificationPage() {
       cancelled = true;
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [loading, error, submitted]);
+  }, [loading, error, result]);
 
   const handleCapture = async () => {
     const video = videoRef.current;
@@ -91,9 +105,13 @@ export default function MobileVerificationPage() {
     setError(null);
 
     try {
-      await uploadFaceImage(sessionId, jpegDataUrl);
+      const uploadResult = await uploadFaceImage(sessionId, jpegDataUrl);
       streamRef.current?.getTracks().forEach((t) => t.stop());
-      setSubmitted(true);
+      setResult({
+        verified: uploadResult.verified,
+        predictedAge: uploadResult.predictedAge,
+        requiredAge: uploadResult.requiredAge,
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -109,7 +127,7 @@ export default function MobileVerificationPage() {
     );
   }
 
-  if (error && !submitted) {
+  if (error && !result) {
     return (
       <div className="min-h-screen bg-[#0A0A0F] flex flex-col items-center justify-center p-6 text-center gap-4">
         <p className="text-red-400">{error}</p>
@@ -120,21 +138,37 @@ export default function MobileVerificationPage() {
     );
   }
 
-  if (submitted) {
+  if (result) {
+    const granted = result.verified === true;
+
     return (
       <div className="min-h-screen bg-[#0A0A0F] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
-          <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
+        <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${granted ? "bg-green-500/20" : "bg-red-500/20"}`}>
+          {granted ? (
+            <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-10 h-10 text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
         </div>
-        <h1 className="text-white text-2xl font-semibold mb-3">Photo captured successfully.</h1>
+        <h1 className="text-white text-2xl font-semibold mb-3">
+          {granted ? "Verification Successful" : "Verification Failed"}
+        </h1>
         <p className="text-white/60 max-w-sm">
-          Age verification will be processed in the next phase.
+          Estimated age: {result.predictedAge} years.
+          {result.requiredAge != null && ` Required: ${result.requiredAge}+.`}
+        </p>
+        <p className="text-white/50 text-sm mt-4 max-w-sm">
+          {granted
+            ? "Return to your desktop — playback will unlock automatically."
+            : "You do not meet the age requirement for this title."}
         </p>
         {sessionInfo?.movieTitle && (
           <p className="text-white/40 text-sm mt-6">
-            Verifying access for: {sessionInfo.movieTitle}
+            {sessionInfo.movieTitle}
           </p>
         )}
       </div>
@@ -143,7 +177,6 @@ export default function MobileVerificationPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
-      {/* Header */}
       <div className="px-4 py-5 text-center border-b border-[#2A2A35]">
         <p className="text-[#E50914] text-xs font-bold uppercase tracking-widest mb-1">AgeGuard</p>
         <h1 className="text-white text-lg font-semibold">Identity Verification</h1>
@@ -152,7 +185,6 @@ export default function MobileVerificationPage() {
         )}
       </div>
 
-      {/* Camera preview */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 gap-6">
         <div className="relative w-full max-w-sm aspect-[3/4] bg-black rounded-2xl overflow-hidden border border-[#2A2A35]">
           <video
@@ -183,7 +215,6 @@ export default function MobileVerificationPage() {
         </button>
       </div>
 
-      {/* Hidden canvas for JPEG conversion */}
       <canvas ref={canvasRef} className="hidden" />
     </div>
   );

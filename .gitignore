@@ -93,6 +93,10 @@ local.settings.json
 backend/uploads/*
 !backend/uploads/.gitkeep
 
+# Local HTTPS dev certificates
+frontend/certs/*.crt
+frontend/certs/*.key
+
 # Static files (if generated)
 backend/static/*
 !backend/static/.gitkeep
@@ -115,3 +119,19 @@ backend/static/*
 .cache/
 .parcel-cache/
 .vite/
+
+# Dataset
+backend/datasets/
+
+# Trained models
+backend/models/*.pth
+
+# Uploads
+backend/uploads/
+
+# Python
+__pycache__/
+*.pyc
+
+# Frontend
+frontend/node_modules/

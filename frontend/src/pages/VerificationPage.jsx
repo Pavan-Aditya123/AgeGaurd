@@ -13,6 +13,8 @@ import RatingBadge from "../components/RatingBadge";
 import useMovie from "../hooks/useMovie";
 import { createVerificationSession, getVerificationSession } from "../services/verificationService";
 import { getFallbackGradient } from "../utils/posterUtils";
+import { getMobileVerifyUrl } from "../utils/networkUtils";
+import { saveVerifiedAccess } from "../utils/verificationAccess";
 
 export default function VerificationPage() {
   const { movieId } = useParams();
@@ -21,38 +23,42 @@ export default function VerificationPage() {
 
   const [sessionId, setSessionId] = useState(null);
   const [mobileUrl, setMobileUrl] = useState(null);
-  const [uploadStatus, setUploadStatus] = useState("pending");
+  const [verificationStatus, setVerificationStatus] = useState("pending");
+  const [predictedAge, setPredictedAge] = useState(null);
   const [error, setError] = useState(null);
   const [imgError, setImgError] = useState(false);
 
-  // Create session when page loads
   useEffect(() => {
     if (!movieId || movieLoading) return;
 
     createVerificationSession(movieId)
       .then((data) => {
         setSessionId(data.sessionId);
-        setMobileUrl(data.mobileVerifyUrl);
+        setMobileUrl(getMobileVerifyUrl(data.sessionId));
       })
       .catch((err) => setError(err.message));
   }, [movieId, movieLoading]);
 
-  // Poll for upload status after QR is shown
   useEffect(() => {
-    if (!sessionId || uploadStatus === "uploaded") return;
+    if (!sessionId || verificationStatus === "verified" || verificationStatus === "denied") return;
 
     const interval = setInterval(() => {
       getVerificationSession(sessionId)
         .then((data) => {
-          if (data.uploadStatus === "uploaded") {
-            setUploadStatus("uploaded");
+          if (data.verificationStatus === "verified") {
+            setVerificationStatus("verified");
+            setPredictedAge(data.predictedAge);
+            saveVerifiedAccess(movieId, sessionId);
+          } else if (data.verificationStatus === "denied") {
+            setVerificationStatus("denied");
+            setPredictedAge(data.predictedAge);
           }
         })
         .catch(() => {});
-    }, 3000);
+    }, 2000);
 
     return () => clearInterval(interval);
-  }, [sessionId, uploadStatus]);
+  }, [sessionId, verificationStatus, movieId]);
 
   if (movieLoading) {
     return (
@@ -89,7 +95,6 @@ export default function VerificationPage() {
         </button>
 
         <div className="grid md:grid-cols-2 gap-10 items-start">
-          {/* Movie info */}
           <div>
             <div className="rounded-2xl overflow-hidden border border-[#2A2A35] shadow-2xl mb-6 max-w-xs">
               {!imgError ? (
@@ -117,35 +122,68 @@ export default function VerificationPage() {
             </p>
           </div>
 
-          {/* QR code */}
           <div className="bg-[#141418] border border-[#2A2A35] rounded-2xl p-8 flex flex-col items-center text-center">
             {error && (
               <p className="text-red-400 mb-4">{error}</p>
             )}
 
-            {uploadStatus === "uploaded" ? (
+            {verificationStatus === "verified" ? (
               <div className="py-8">
                 <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h2 className="text-white text-xl font-semibold mb-2">Verification Submitted</h2>
-                <p className="text-white/60 text-sm">
-                  Photo captured successfully. Age verification will be processed in the next phase.
+                <h2 className="text-white text-xl font-semibold mb-2">Access Granted</h2>
+                <p className="text-white/60 text-sm mb-6">
+                  Estimated age: {predictedAge} years (required: {movie.required_age}+).
                 </p>
+                <button
+                  onClick={() => navigate(`/watch/${movieId}`)}
+                  className="btn-primary text-base px-8 py-3"
+                >
+                  Watch Now
+                </button>
+              </div>
+            ) : verificationStatus === "denied" ? (
+              <div className="py-8">
+                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <h2 className="text-white text-xl font-semibold mb-2">Access Denied</h2>
+                <p className="text-white/60 text-sm mb-6">
+                  Estimated age: {predictedAge} years. This title requires {movie.required_age}+.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="btn-secondary text-base px-8 py-3"
+                >
+                  Try Again
+                </button>
               </div>
             ) : (
               <>
                 <h2 className="text-white text-lg font-semibold mb-2">Scan to Verify</h2>
                 <p className="text-white/50 text-sm mb-6">
                   Open your phone camera and scan this QR code to complete identity verification.
+                  Ensure your phone is on the same Wi‑Fi as this laptop.
+                </p>
+
+                <p className="text-amber-400/80 text-xs mb-4 max-w-xs">
+                  First time on phone: accept the HTTPS security warning when prompted, then allow camera access.
                 </p>
 
                 {mobileUrl ? (
-                  <div className="bg-white p-4 rounded-xl mb-4">
-                    <QRCodeSVG value={mobileUrl} size={200} level="M" />
-                  </div>
+                  <>
+                    <div className="bg-white p-4 rounded-xl mb-4">
+                      <QRCodeSVG value={mobileUrl} size={200} level="M" />
+                    </div>
+                    <p className="text-white/70 text-sm break-all max-w-xs mb-2">
+                      {mobileUrl}
+                    </p>
+                  </>
                 ) : (
                   <div className="w-[232px] h-[232px] bg-white/5 rounded-xl animate-pulse mb-4" />
                 )}

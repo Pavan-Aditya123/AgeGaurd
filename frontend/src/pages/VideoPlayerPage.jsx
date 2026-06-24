@@ -1,54 +1,101 @@
 /**
  * pages/VideoPlayerPage.jsx
  *
- * Fullscreen video player.
- * Data fetched via useMovie(id) hook.
- * Phase 2+ will add: session token validation before allowing playback.
+ * Fullscreen video player with access control for restricted titles.
  */
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import useMovie from "../hooks/useMovie";
-
-const TRAILER_PATH = "/Videos/Kung Fu Panda_Trailer.mp4";
+import {
+  checkPlaybackAccess,
+  getVerifiedSessionId,
+} from "../utils/verificationAccess";
 
 export default function VideoPlayerPage() {
-  const { id }    = useParams();
-  const navigate  = useNavigate();
-  const { movie } = useMovie(id);
-  const videoRef  = useRef(null);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { movie, loading } = useMovie(id);
+  const videoRef = useRef(null);
+  const [accessChecked, setAccessChecked] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
 
-  // Temporarily use the same local trailer for every movie.
-  const videoPath = encodeURI(TRAILER_PATH);
-
-  useEffect(() => {
-    console.log("Movie:", movie);
-    console.log("Video Path:", videoPath);
-  }, [movie, videoPath]);
+  const videoPath = movie?.video ? encodeURI(movie.video) : null;
 
   useEffect(() => {
+    if (loading || !movie) return;
+
+    async function verifyAccess() {
+      if (!movie.restricted) {
+        setAccessChecked(true);
+        return;
+      }
+
+      const sessionId = getVerifiedSessionId(id);
+      if (!sessionId) {
+        setAccessDenied(true);
+        setAccessChecked(true);
+        return;
+      }
+
+      const allowed = await checkPlaybackAccess(id, sessionId);
+      setAccessDenied(!allowed);
+      setAccessChecked(true);
+    }
+
+    verifyAccess();
+  }, [loading, movie, id]);
+
+  useEffect(() => {
+    if (!accessChecked || accessDenied) return;
+
     const video = videoRef.current;
     if (!video) return;
 
     const tryPlay = () => {
-      video.play().catch((err) => {
-        console.warn("Autoplay blocked, user must press play:", err.message);
-      });
+      video.play().catch(() => {});
     };
 
     video.addEventListener("loadeddata", tryPlay);
     return () => video.removeEventListener("loadeddata", tryPlay);
-  }, [videoPath]);
+  }, [accessChecked, accessDenied, videoPath]);
 
-  const handleVideoError = (e) => {
-    const el = e.target;
-    console.error("Video error:", el.error?.code, el.error?.message);
-    console.error("Video src:", el.currentSrc || el.src);
-  };
+  if (loading || !accessChecked) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <p className="text-white/40 animate-pulse">Loading player…</p>
+      </div>
+    );
+  }
+
+  if (!movie) {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4">
+        <p className="text-white">Movie not found.</p>
+        <button onClick={() => navigate("/")} className="btn-secondary">Back to Home</button>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-[#E50914] text-xl font-semibold">Age verification required</p>
+        <p className="text-white/60 max-w-md">
+          Complete identity verification before watching {movie.title}.
+        </p>
+        <button onClick={() => navigate(`/verify/${id}`)} className="btn-primary px-8 py-3">
+          Verify & Watch
+        </button>
+        <button onClick={() => navigate(`/movie/${id}`)} className="btn-secondary px-6 py-3">
+          Back to Details
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col">
-      {/* Top bar */}
       <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent px-6 py-4 flex items-center gap-4">
         <button
           onClick={() => navigate(`/movie/${id}`)}
@@ -60,25 +107,27 @@ export default function VideoPlayerPage() {
           </svg>
         </button>
         <div>
-          <p className="text-white font-semibold">{movie?.title || "Loading..."}</p>
-          <p className="text-white/50 text-xs">{movie?.category}</p>
+          <p className="text-white font-semibold">{movie.title}</p>
+          <p className="text-white/50 text-xs">{movie.category}</p>
         </div>
       </div>
 
-      {/* HTML5 video player */}
       <div className="flex-1 flex items-center justify-center">
-        <video
-          ref={videoRef}
-          key={videoPath}
-          controls
-          autoPlay
-          playsInline
-          className="w-full h-full object-contain"
-          onError={handleVideoError}
-        >
-          <source src={videoPath} type="video/mp4" />
-          Your browser does not support HTML5 video.
-        </video>
+        {videoPath ? (
+          <video
+            ref={videoRef}
+            key={videoPath}
+            controls
+            autoPlay
+            playsInline
+            className="w-full h-full object-contain"
+          >
+            <source src={videoPath} type="video/mp4" />
+            Your browser does not support HTML5 video.
+          </video>
+        ) : (
+          <p className="text-white/60">Video file not available for this title.</p>
+        )}
       </div>
     </div>
   );
