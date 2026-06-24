@@ -53,3 +53,11 @@ AgeGuard/
 | GET | /movies | Returns all movies as JSON |
 | GET | /movies/:id | Returns a single movie |
 | GET | /health | Health check |
+
+## Model Setup
+
+Place the trained model file here:
+
+`backend/models/age_model.pth`
+
+The model file is not included in the repository because it exceeds GitHub's file size limit.
