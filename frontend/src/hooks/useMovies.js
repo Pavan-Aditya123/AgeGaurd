@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from "react";
 import { fetchAllMovies } from "../services/movieService";
+import MOVIES from "../data/movies";
 
 export default function useMovies() {
   const [movies, setMovies]   = useState([]);
@@ -23,6 +24,8 @@ export default function useMovies() {
         setLoading(false);
       })
       .catch((err) => {
+        console.warn("Backend unavailable, using static fallback:", err.message);
+        setMovies(MOVIES);
         setError(err.message);
         setLoading(false);
       });

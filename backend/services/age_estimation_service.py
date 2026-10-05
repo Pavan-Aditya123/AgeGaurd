@@ -94,11 +94,19 @@ def predict_age(image_path):
         FileNotFoundError: If model file is missing
         Exception: If image processing or prediction fails
     """
+    from services.face_detection_service import detect_and_crop_face
+    
     model, device = get_model()
     
-    # Load and preprocess image
-    image = Image.open(image_path).convert('RGB')
-    image_tensor = transform(image).unsqueeze(0).to(device)
+    # Detect and crop face from image
+    face_image = detect_and_crop_face(image_path)
+    
+    if face_image is None:
+        # Fallback: use original image if no face detected
+        face_image = Image.open(image_path).convert('RGB')
+    
+    # Preprocess image
+    image_tensor = transform(face_image).unsqueeze(0).to(device)
     
     # Predict
     with torch.no_grad():
@@ -122,9 +130,16 @@ def predict_age_from_bytes(image_bytes):
         float: Predicted age in years
     """
     from io import BytesIO
+    from services.face_detection_service import detect_and_crop_face
     
-    image = Image.open(BytesIO(image_bytes)).convert('RGB')
-    image_tensor = transform(image).unsqueeze(0).to(get_model()[1])
+    # Detect and crop face from image bytes
+    face_image = detect_and_crop_face(image_bytes)
+    
+    if face_image is None:
+        # Fallback: use original image if no face detected
+        face_image = Image.open(BytesIO(image_bytes)).convert('RGB')
+    
+    image_tensor = transform(face_image).unsqueeze(0).to(get_model()[1])
     
     with torch.no_grad():
         output = get_model()[0](image_tensor)

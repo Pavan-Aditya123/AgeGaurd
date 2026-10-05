@@ -13,6 +13,7 @@ import MovieDetailPage          from "../pages/MovieDetailPage";
 import VideoPlayerPage          from "../pages/VideoPlayerPage";
 import VerificationPage         from "../pages/VerificationPage";
 import MobileVerificationPage   from "../pages/MobileVerificationPage";
+import VideoTestPage            from "../pages/VideoTestPage"; // TEMP: remove after debugging
 
 // Route path constants — import these anywhere you need to navigate
 export const ROUTES = {
@@ -21,6 +22,7 @@ export const ROUTES = {
   WATCH:          "/watch/:id",
   VERIFY:         "/verify/:movieId",
   MOBILE_VERIFY:  "/mobile-verify/:sessionId",
+  VIDEO_TEST:     "/video-test", // TEMP: remove after debugging
 };
 
 export default function AppRoutes() {
@@ -30,7 +32,8 @@ export default function AppRoutes() {
       <Route path={ROUTES.MOVIE_DETAIL}   element={<MovieDetailPage />} />
       <Route path={ROUTES.WATCH}          element={<VideoPlayerPage />} />
       <Route path={ROUTES.VERIFY}         element={<VerificationPage />} />
-      <Route path={ROUTES.MOBILE_VERIFY}   element={<MobileVerificationPage />} />
+      <Route path={ROUTES.MOBILE_VERIFY}  element={<MobileVerificationPage />} />
+      <Route path={ROUTES.VIDEO_TEST}     element={<VideoTestPage />} /> {/* TEMP */}
     </Routes>
   );
 }

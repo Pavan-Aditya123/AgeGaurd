@@ -22,6 +22,14 @@ export default function VideoPlayerPage() {
 
   const videoPath = movie?.video ? encodeURI(movie.video) : null;
 
+  // Debug: log the resolved video URL whenever movie data is available
+  useEffect(() => {
+    if (!movie) return;
+    console.log("Video Path:", videoPath);
+    console.log("Raw video field:", movie.video);
+    console.log("Movie restricted:", movie.restricted);
+  }, [movie, videoPath]);
+
   useEffect(() => {
     if (loading || !movie) return;
 
@@ -126,7 +134,10 @@ export default function VideoPlayerPage() {
             Your browser does not support HTML5 video.
           </video>
         ) : (
-          <p className="text-white/60">Video file not available for this title.</p>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-white/60">Video file not available for this title.</p>
+            <p className="text-white/30 text-xs">video field: {String(movie?.video)}</p>
+          </div>
         )}
       </div>
     </div>

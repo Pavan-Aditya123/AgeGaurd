@@ -4,7 +4,21 @@
  * API layer for QR verification and face photo upload (Phase 3).
  */
 
-const BASE_URL = "";
+function getBackendUrl() {
+  // When on mobile, we need to use the backend IP and port
+  const ip = process.env.REACT_APP_SERVER_IP;
+  const port = process.env.REACT_APP_BACKEND_PORT || "5000";
+  
+  if (ip) {
+    // Backend uses HTTP (Flask dev server doesn't have SSL)
+    return `http://${ip}:${port}`;
+  }
+  
+  // Fallback to proxy for desktop
+  return "";
+}
+
+const BASE_URL = getBackendUrl();
 
 /**
  * Create a verification session for a restricted movie.

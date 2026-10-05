@@ -157,6 +157,14 @@ def upload_face():
 
     mark_uploaded(session_id, filepath)
 
+    # Also save cropped face for debugging
+    from services.face_detection_service import detect_and_crop_face
+    face_image = detect_and_crop_face(filepath)
+    if face_image:
+        face_filename = f"{session_id}_{timestamp}_face.jpg"
+        face_filepath = os.path.join(UPLOAD_FOLDER, face_filename)
+        face_image.save(face_filepath)
+
     try:
         predicted_age = predict_age(filepath)
     except FileNotFoundError as e:
