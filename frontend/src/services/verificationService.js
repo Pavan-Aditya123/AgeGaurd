@@ -1,76 +1,50 @@
 /**
  * services/verificationService.js
  *
- * API layer for QR verification and face photo upload (Phase 3).
+ * All API calls go to the same origin (port 3000) — both desktop and mobile.
+ * The React dev server proxies /api/* → Flask :5000 (HTTP).
+ *
+ * This means:
+ *   Desktop: https://localhost:3000/api/... → proxy → http://localhost:5000
+ *   Mobile:  https://192.168.40.134:3000/api/... → proxy → http://localhost:5000
+ *
+ * No mixed content, no direct port-5000 access needed.
  */
 
-function getBackendUrl() {
-  // When on mobile, we need to use the backend IP and port
-  const ip = process.env.REACT_APP_SERVER_IP;
-  const port = process.env.REACT_APP_BACKEND_PORT || "5000";
-  
-  if (ip) {
-    // Backend uses HTTP (Flask dev server doesn't have SSL)
-    return `http://${ip}:${port}`;
-  }
-  
-  // Fallback to proxy for desktop
-  return "";
-}
+// Always use same origin — let the proxy handle forwarding to Flask
+const BASE_URL = "";
 
-const BASE_URL = getBackendUrl();
-
-/**
- * Create a verification session for a restricted movie.
- * @param {number|string} movieId
- * @returns {Promise<{ sessionId, movieId, mobileVerifyUrl }>}
- */
 export async function createVerificationSession(movieId) {
-  const response = await fetch(`${BASE_URL}/api/verification/session`, {
-    method: "POST",
+  const res = await fetch(`${BASE_URL}/api/verification/session`, {
+    method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ movieId: Number(movieId) }),
+    body:    JSON.stringify({ movieId: Number(movieId) }),
   });
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || `Failed to create session (status ${response.status})`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to create session (${res.status})`);
   }
-
-  return response.json();
+  return res.json();
 }
 
-/**
- * Fetch session status by sessionId.
- * @param {string} sessionId
- */
 export async function getVerificationSession(sessionId) {
-  const response = await fetch(`${BASE_URL}/api/verification/session/${sessionId}`);
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || `Session not found (status ${response.status})`);
+  const res = await fetch(`${BASE_URL}/api/verification/session/${sessionId}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Session not found (${res.status})`);
   }
-
-  return response.json();
+  return res.json();
 }
 
-/**
- * Upload a captured face photo as base64 JPEG.
- * @param {string} sessionId
- * @param {string} imageBase64  JPEG data URL or raw base64 string
- */
 export async function uploadFaceImage(sessionId, imageBase64) {
-  const response = await fetch(`${BASE_URL}/api/upload-face`, {
-    method: "POST",
+  const res = await fetch(`${BASE_URL}/api/upload-face`, {
+    method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ sessionId, image: imageBase64 }),
+    body:    JSON.stringify({ sessionId, image: imageBase64 }),
   });
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || `Upload failed (status ${response.status})`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Upload failed (${res.status})`);
   }
-
-  return response.json();
+  return res.json();
 }

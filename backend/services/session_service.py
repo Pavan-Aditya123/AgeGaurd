@@ -36,6 +36,10 @@ def create_session(movie_id: int) -> dict:
         "predictedAge": None,
         "requiredAge": None,
         "verified": None,
+        "decision": None,
+        "reason": None,
+        "pad": None,
+        "manipulation": None,
         "createdAt": now,
         "verifiedAt": None,
     }
@@ -68,18 +72,32 @@ def mark_uploaded(session_id: str, image_path: str) -> dict | None:
 def mark_verified(
     session_id: str,
     *,
-    predicted_age: float,
+    predicted_age: float | None,
     required_age: int | None,
     verified: bool,
+    decision: str | None = None,
+    reason: str | None = None,
+    pad: dict | None = None,
+    manipulation: dict | None = None,
 ) -> dict | None:
     """Store age prediction and verification decision on the session."""
     session = get_session(session_id)
     if not session:
         return None
-    session["predictedAge"] = round(predicted_age, 2)
+    session["predictedAge"] = round(predicted_age, 2) if predicted_age is not None else None
     session["requiredAge"] = required_age
     session["verified"] = verified
-    session["verificationStatus"] = "verified" if verified else "denied"
+    session["decision"] = decision
+    session["reason"] = reason
+    session["pad"] = pad
+    session["manipulation"] = manipulation
+    # Map decision to human-readable status
+    if decision == "ALLOW":
+        session["verificationStatus"] = "verified"
+    elif decision == "RESTRICT":
+        session["verificationStatus"] = "denied"
+    else:
+        session["verificationStatus"] = "recapture"
     session["verifiedAt"] = _utcnow().isoformat()
     return session
 
